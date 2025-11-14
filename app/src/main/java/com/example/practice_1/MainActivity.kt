@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -75,6 +76,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -133,7 +135,7 @@ fun HomeScreen(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavController, vm: ProfileViewModel) {
+fun ProfileScreen(navController: NavController, vm: ProfileViewModel = viewModel()) {
     var isFollowing by remember { mutableStateOf(false) }
     var count by rememberSaveable { mutableIntStateOf(2330) }
     val color by animateColorAsState(
@@ -141,7 +143,9 @@ fun ProfileScreen(navController: NavController, vm: ProfileViewModel) {
     )
     val snackbarHostState = remember { SnackbarHostState()}
     val scope = rememberCoroutineScope()
-    val followers = vm.followers
+
+    val followers by vm.followers.collectAsState()
+    val user = vm.user
 
     val state = rememberLazyListState()
     Scaffold(
@@ -149,8 +153,15 @@ fun ProfileScreen(navController: NavController, vm: ProfileViewModel) {
             CenterAlignedTopAppBar(
                 title = { Text("Profile") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.Menu, null)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        IconButton(onClick = {navController.navigateUp()}) {
+                            Icon(Icons.Default.Menu, null)
+                        }
+                        IconButton(onClick = vm::refresh) {
+                            Icon(Icons.Default.Refresh, null)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -169,6 +180,10 @@ fun ProfileScreen(navController: NavController, vm: ProfileViewModel) {
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if(user == null) {
+                    Text("Loading...")
+                    return@Column
+                }
                 LazyRow(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -291,14 +306,15 @@ fun ProfileScreen(navController: NavController, vm: ProfileViewModel) {
                             follower = follower,
                             onDelete = {
                                 val removedFollower = follower
-                                vm.removeFollower(removedFollower)
+                                vm::deleteFollower(removedFollower)
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
                                         message = "${removedFollower.name} removed from followers",
                                         actionLabel = "Undo"
                                     )
                                     if(result == SnackbarResult.ActionPerformed){
-                                        vm.addFollower(removedFollower)
+                                        val followerList = mutableListOf<Follower>(removedFollower)
+                                        vm.insertFollowers(followerList)
                                     }
                                 }
                             }
