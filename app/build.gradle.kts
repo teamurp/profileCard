@@ -4,6 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 //    id("org.jetbrains.kotlin.kapt")
     id("com.google.devtools.ksp") version "2.1.10-1.0.30"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp") version "2.0.0-1.0.22"
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -65,4 +70,6 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.3")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.dagger:hilt-android:2.57.2")
+    ksp("com.google.dagger:hilt-compiler:2.57.2")
 }

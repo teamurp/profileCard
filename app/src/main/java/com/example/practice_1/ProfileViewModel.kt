@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.getValue
 import androidx.room.Room
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -51,14 +52,17 @@ import kotlinx.coroutines.launch
 //    }
 //}
 
-class ProfileViewModel(
-    private val repo: ProfileRepo = ProfileRepo()
+class ProfileViewModel @Inject constructor(
+    private val repo: ProfileRepo
 ) : ViewModel(){
     var user by mutableStateOf<UserProfile?>(null)
     val followers = repo.followers.stateIn(
         viewModelScope,
-        SharingStarted.Eagerly,
+        SharingStarted.WhileSubscribed(),
         emptyList()
+    )
+    val posts = repo.posts.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(), emptyList()
     )
     init {
         viewModelScope.launch {
